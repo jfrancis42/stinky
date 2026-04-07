@@ -1,13 +1,15 @@
-# Quick Start Guide
+# Quick Start Guide - Extended stinky
 
-## 1. Install Dependencies
+## Installation
 
 ```bash
 cd ~/stinky
 pip3 install -r requirements.txt
 ```
 
-## 2. Run the Sniffer
+## Basic Usage
+
+### Monitor Encrypted Protocols (Default)
 
 ```bash
 sudo ./stinky.py
@@ -15,168 +17,320 @@ sudo ./stinky.py
 
 Press Ctrl+C to stop.
 
-## 3. Generate Some Traffic
-
-In another terminal:
+### Monitor All Protocols
 
 ```bash
-# TLS traffic
-curl https://example.com
-curl https://google.com
-curl https://github.com
-
-# SSH traffic (if you have an SSH server)
-ssh user@192.168.1.50
+sudo ./stinky.py --all
 ```
 
-## 4. Check the Results
+### Specific Interface
 
-### View JSON log:
+```bash
+sudo ./stinky.py eth0
+sudo ./stinky.py -i wlan0
+```
+
+## Generate Test Traffic
+
+```bash
+# Terminal 2 (while sniffer running):
+
+# TLS/HTTPS
+curl https://example.com
+curl https://google.com
+
+# SSH
+ssh user@host
+
+# DNS over TLS (if supported)
+dig @1.1.1.1 example.com
+
+# STARTTLS (if mail server available)
+openssl s_client -connect mail.example.com:587 -starttls smtp
+```
+
+## View Results
+
+### Pretty Print JSON
+
 ```bash
 cat stinky.json | jq .
 ```
 
-Or:
-```bash
-python3 -m json.tool stinky.json
-```
+### Count Captures
 
-### Count captures:
 ```bash
 jq 'length' stinky.json
 ```
 
-### Filter by type:
-```bash
-# Show only TLS ClientHello
-jq '.[] | select(.type == "TLS ClientHello")' stinky.json
+### Post-Quantum Security Summary
 
-# Show only SSH
-jq '.[] | select(.type | startswith("SSH"))' stinky.json
+```bash
+jq 'group_by(.post_quantum_secure) | map({status: .[0].post_quantum_secure, count: length})' stinky.json
 ```
 
-### Extract server names (SNI):
-```bash
-jq '.[] | select(.server_name) | .server_name' stinky.json
+Example output:
+```json
+[
+  { "status": "No", "count": 145 },
+  { "status": "Hybrid", "count": 12 },
+  { "status": "Yes", "count": 3 },
+  { "status": "Unknown", "count": 5 }
+]
 ```
 
-### Show selected ciphers:
+### Find Post-Quantum Secure Connections
+
 ```bash
-jq '.[] | select(.selected_cipher) | .selected_cipher.name' stinky.json
+jq '.[] | select(.post_quantum_secure == "Yes" or .post_quantum_secure == "Hybrid")' stinky.json
 ```
 
-### Find weak TLS versions:
+### Find Quantum-Vulnerable Connections
+
 ```bash
-jq '.[] | select(.tls_version == "TLS 1.0" or .tls_version == "TLS 1.1")' stinky.json
+jq '.[] | select(.post_quantum_secure == "No")' stinky.json
 ```
 
-## 5. Common Issues
+### Protocol Distribution
 
-### "Permission denied"
 ```bash
-# Solution: Use sudo
-sudo ./stinky.py
+jq 'group_by(.protocol) | map({protocol: .[0].protocol, count: length})' stinky.json
 ```
 
-### "scapy not installed"
+### Server Names (SNI)
+
 ```bash
-# Solution: Install scapy
-pip3 install scapy
+jq '.[] | select(.server_name) | .server_name' stinky.json | sort -u
 ```
 
-### Not capturing anything
-```bash
-# Generate traffic in another terminal
-curl https://example.com
+### Cipher Suites Used
 
-# Or specify your network interface
-sudo ./stinky.py eth0
-sudo ./stinky.py wlan0
+```bash
+jq '.[] | select(.selected_cipher) | .selected_cipher.name' stinky.json | sort | uniq -c | sort -rn
 ```
 
-### List available interfaces:
+### Find Weak TLS Versions
+
 ```bash
-ip link show
+jq '.[] | select(.tls_version == "TLS 1.0" or .tls_version == "TLS 1.1" or .tls_version == "SSL 3.0")' stinky.json
 ```
 
-## 6. Analysis Examples
+### Find Deprecated Ciphers
 
-### Find all cipher suites used
 ```bash
-jq '[.[] | select(.selected_cipher) | .selected_cipher.name] | unique' stinky.json
+# RC4 (broken)
+jq '.[] | select(.selected_cipher.name | contains("RC4"))' stinky.json
+
+# 3DES (weak)
+jq '.[] | select(.selected_cipher.name | contains("3DES"))' stinky.json
+
+# MD5 (broken)
+jq '.[] | select(.selected_cipher.name | contains("MD5"))' stinky.json
 ```
 
-### Count connections per server
+### SSH Versions
+
 ```bash
-jq 'group_by(.server_name) | map({server: .[0].server_name, count: length})' stinky.json
+jq '.[] | select(.protocol == "SSH") | .ssh_software_version' stinky.json | sort | uniq -c
 ```
 
-### Show TLS versions distribution
+### WireGuard Activity
+
 ```bash
-jq 'group_by(.tls_version) | map({version: .[0].tls_version, count: length})' stinky.json
+jq '.[] | select(.protocol == "WireGuard")' stinky.json
 ```
 
-### Find servers with weak key exchange
+### IPsec/IKE Negotiations
+
 ```bash
-# Look for RSA key exchange (no forward secrecy)
-jq '.[] | select(.selected_cipher.name | contains("RSA_WITH"))' stinky.json
+jq '.[] | select(.protocol == "IPsec/IKE")' stinky.json
 ```
 
-### SSH version summary
+### STARTTLS Upgrades
+
 ```bash
-jq '.[] | select(.ssh_software_version) | .ssh_software_version' stinky.json | sort | uniq -c
+jq '.[] | select(.type | contains("STARTTLS"))' stinky.json
 ```
 
-## 7. Advanced: Continuous Monitoring
+## Analysis Examples
 
-Run in background and rotate logs:
+### 1. Quantum Readiness Audit
+
+Find all classical crypto (needs upgrade):
+```bash
+echo "=== Quantum-Vulnerable Connections ==="
+jq -r '.[] | select(.post_quantum_secure == "No") | "\(.timestamp) \(.protocol) \(.connection)"' stinky.json | head -20
+```
+
+### 2. Security Score by Protocol
 
 ```bash
-# Start in background
+jq 'group_by(.protocol) | map({
+  protocol: .[0].protocol,
+  total: length,
+  pq_safe: [.[] | select(.post_quantum_secure == "Yes")] | length,
+  hybrid: [.[] | select(.post_quantum_secure == "Hybrid")] | length,
+  vulnerable: [.[] | select(.post_quantum_secure == "No")] | length
+})' stinky.json
+```
+
+### 3. Worst Offenders (Weak Crypto)
+
+```bash
+echo "=== Weak TLS Versions ==="
+jq '.[] | select(.tls_version == "TLS 1.0" or .tls_version == "TLS 1.1")' stinky.json | jq -s 'length'
+
+echo "=== Weak Ciphers ==="
+jq '.[] | select(.selected_cipher.name | contains("RC4") or contains("3DES") or contains("MD5"))' stinky.json | jq -s 'length'
+
+echo "=== No Forward Secrecy ==="
+jq '.[] | select(.selected_cipher.name | contains("RSA_WITH"))' stinky.json | jq -s 'length'
+```
+
+### 4. Timeline Analysis
+
+Connections per hour:
+```bash
+jq -r '.[] | .timestamp[:13]' stinky.json | sort | uniq -c
+```
+
+### 5. Top Talkers
+
+Most active source IPs:
+```bash
+jq -r '.[] | .src_ip' stinky.json | sort | uniq -c | sort -rn | head -10
+```
+
+Most active destination IPs:
+```bash
+jq -r '.[] | .dst_ip' stinky.json | sort | uniq -c | sort -rn | head -10
+```
+
+## Export Formats
+
+### CSV for Excel
+
+```bash
+jq -r '.[] | [
+  .timestamp,
+  .protocol,
+  .type,
+  .connection,
+  .post_quantum_secure,
+  .tls_version // "-",
+  .selected_cipher.name // "-"
+] | @csv' stinky.json > crypto_report.csv
+```
+
+### Summary Report
+
+```bash
+cat > report.txt << EOF
+Crypto Analysis Report
+Generated: $(date)
+
+Total Captures: $(jq 'length' stinky.json)
+
+Post-Quantum Security:
+  ✅ PQ Secure:   $(jq '[.[] | select(.post_quantum_secure == "Yes")] | length' stinky.json)
+  🔐 Hybrid:      $(jq '[.[] | select(.post_quantum_secure == "Hybrid")] | length' stinky.json)
+  ⚠️  Vulnerable: $(jq '[.[] | select(.post_quantum_secure == "No")] | length' stinky.json)
+  ❓ Unknown:     $(jq '[.[] | select(.post_quantum_secure == "Unknown")] | length' stinky.json)
+
+Protocols Detected:
+$(jq -r 'group_by(.protocol) | .[] | "  \(.[0].protocol): \(length)"' stinky.json)
+
+Weak Crypto Issues:
+  TLS 1.0/1.1:    $(jq '[.[] | select(.tls_version == "TLS 1.0" or .tls_version == "TLS 1.1")] | length' stinky.json)
+  RC4/3DES/MD5:   $(jq '[.[] | select(.selected_cipher.name | contains("RC4") or contains("3DES") or contains("MD5"))] | length' stinky.json)
+  No Forward Sec: $(jq '[.[] | select(.selected_cipher.name | contains("RSA_WITH"))] | length' stinky.json)
+EOF
+cat report.txt
+```
+
+## Integration Examples
+
+### With UPCE
+
+Monitor UPCE traffic:
+```bash
+# Terminal 1
+cd ~/stinky && sudo ./stinky.py
+
+# Terminal 2
+cd ~/back-end && ./provision.sh
+```
+
+### Continuous Monitoring
+
+Run in background:
+```bash
+cd ~/stinky
 sudo nohup ./stinky.py > stinky.log 2>&1 &
 
 # Check it's running
 ps aux | grep stinky
 
-# Stop it later
+# Stop it
 sudo pkill -f stinky.py
 ```
 
-## 8. Integration with UPCE
+### Scheduled Analysis
 
-To monitor UPCE-managed traffic:
+Add to crontab:
+```bash
+# Run analysis every hour
+0 * * * * cd ~/stinky && sudo ./stinky.py &
+```
+
+## Troubleshooting
+
+### No Captures
 
 ```bash
-# Run on your UPCE management host
-cd ~/stinky
+# Check interface
+ip link show
+
+# Test with known traffic
+curl https://example.com
+
+# Check for scapy issues
+python3 -c "from scapy.all import *; print('OK')"
+```
+
+### Performance Issues
+
+If capturing too many packets:
+```bash
+# Monitor specific IPs only
+# Edit stinky.py, add to filter_str:
+"and (host 10.1.1.100 or host 10.1.1.200)"
+```
+
+### Permission Issues
+
+```bash
+# Must run as root
 sudo ./stinky.py
 
-# In another terminal, generate traffic
-cd ~/back-end
-./upce.py ../common/inventory.json ../common/policy.json ../config.json
+# Or grant capabilities (Linux)
+sudo setcap cap_net_raw+ep $(which python3)
+./stinky.py
 ```
 
-This will capture all TLS connections made by UPCE (API calls, Ansible provisioning, etc.)
+## Next Steps
 
-## 9. Analyze Specific Hosts
+1. Run for 24 hours to get full picture
+2. Analyze post-quantum readiness
+3. Identify weak crypto
+4. Generate security report
+5. Plan migration to PQ-safe algorithms
+6. Re-test after upgrades
 
-Monitor only specific IPs:
+## References
 
-Edit `stinky.py` line ~250:
-```python
-# Before:
-filter_str = "tcp port 443 or tcp port 22"
+- Full documentation: `README.md`
+- Example output: `example_output.json`
+- UPCE integration: `~/docs/`
 
-# After (monitor only 10.1.1.100):
-filter_str = "(tcp port 443 or tcp port 22) and host 10.1.1.100"
-```
-
-## 10. Export for Reporting
-
-Convert to CSV:
-
-```bash
-jq -r '.[] | [.timestamp, .type, .connection, .tls_version // .ssh_protocol_version, .selected_cipher.name // .ssh_software_version] | @csv' stinky.json > report.csv
-```
-
-Open in Excel/LibreOffice or process further.
+Happy crypto sniffing! 🔐

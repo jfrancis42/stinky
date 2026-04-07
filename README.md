@@ -1,257 +1,493 @@
-# stinky - TLS/SSH Crypto Sniffer
+# stinky - Comprehensive Crypto Protocol Sniffer
 
-A network traffic analyzer that captures and analyzes cryptographic information from TLS and SSH connections.
+A network traffic analyzer that captures and analyzes cryptographic information from encrypted protocols including TLS, SSH, IPsec, WireGuard, DTLS, QUIC, and more. **Identifies post-quantum secure connections.**
 
 ## Features
 
-- **TLS Analysis**: Captures ClientHello and ServerHello handshakes
-  - TLS versions (1.0, 1.1, 1.2, 1.3)
-  - Cipher suites offered and selected
-  - Server Name Indication (SNI)
-  - Supported key exchange groups (ECDHE, DHE, etc.)
-  - TLS extensions
+### Monitored Encrypted Protocols (Default Mode)
 
-- **SSH Analysis**: Captures SSH protocol exchange
-  - SSH protocol version
-  - SSH software version
-  - Connection details
+- **TLS/HTTPS** (TCP 443) - ClientHello/ServerHello handshakes, cipher suites, SNI
+- **SSH** (TCP 22) - Protocol exchange, version banners
+- **IPsec/IKE** (UDP 500, 4500) - Key exchange negotiation
+- **WireGuard** (UDP 51820) - Modern VPN handshakes
+- **DTLS** (UDP, various) - TLS over UDP (WebRTC, VPN)
+- **QUIC/HTTP3** (UDP 443) - Modern encrypted web protocol
+- **DNS over TLS** (TCP 853) - Encrypted DNS
+- **STARTTLS** - SMTP, IMAP, POP3, FTP, LDAP, XMPP, PostgreSQL, MySQL
+- **SMB** (TCP 445) - File sharing with encryption
+- **LDAPS** (TCP 636) - LDAP over SSL
+- **IMAPS/POP3S** (TCP 993, 995) - Encrypted email
+- **FTPS** (TCP 989, 990) - FTP over TLS
+- **MQTT over TLS** (TCP 8883) - IoT messaging
+- **SIP over TLS** (TCP 5061) - VoIP signaling
 
-- **Bidirectional Capture**: Monitors traffic in both directions
-- **Real-time Display**: Shows crypto info on screen as it's captured
-- **JSON Logging**: Saves all data to `stinky.json` for later analysis
+### Post-Quantum Security Analysis
+
+Each connection is analyzed to determine quantum resistance:
+
+- **✅ Post-Quantum Secure** - Uses PQ-safe algorithms (Kyber, NTRU, Dilithium, etc.)
+- **🔐 Hybrid** - Mix of post-quantum and classical algorithms (transitional)
+- **⚠️ Classical Crypto** - Uses only classical algorithms (RSA, ECDH, DH) - vulnerable to quantum attacks
+- **❓ Unknown** - Cannot determine security level
+
+### What It Captures
+
+**TLS/DTLS:**
+- Protocol versions (SSL 3.0, TLS 1.0-1.3, DTLS 1.0-1.3)
+- Cipher suites offered and selected
+- Key exchange groups (x25519, Kyber768, secp256r1, etc.)
+- Server Name Indication (SNI)
+- TLS extensions
+- Post-quantum indicators
+
+**SSH:**
+- Protocol version (1.x, 2.0)
+- Software version and implementation
+- Post-quantum SSH detection
+
+**IPsec/IKE:**
+- IKE version (IKEv1, IKEv2)
+- Key exchange proposals
+- Encryption algorithms
+- DH groups
+
+**WireGuard:**
+- Handshake initiation/response
+- Message types
+- Crypto algorithms (Curve25519, ChaCha20-Poly1305)
+
+**QUIC:**
+- QUIC version
+- Initial packets
+- TLS 1.3 integration
+
+**Other Protocols:**
+- STARTTLS upgrade detection
+- SMB dialect negotiation
+- Protocol-specific details
+
+### Output Formats
+
+**Screen (Real-time):**
+- Pretty formatted with color indicators
+- Post-quantum security status highlighted
+- Connection details, crypto algorithms, key information
+
+**JSON Log (stinky.json):**
+- Complete structured data
+- Machine-readable format
+- All captured fields preserved
+- Includes `post_quantum_secure` field
 
 ## Installation
 
 ### Requirements
 - Python 3.6+
 - scapy library
+- Root privileges (packet capture)
 
 ### Install Dependencies
 
 ```bash
-pip3 install scapy
+cd ~/stinky
+pip3 install -r requirements.txt
 ```
 
 Or:
-
 ```bash
-pip3 install -r requirements.txt
+pip3 install scapy
 ```
 
 ## Usage
 
-### Basic Usage
+### Basic Usage (Encrypted Only)
 
 ```bash
 sudo ./stinky.py
 ```
 
-This captures on the default network interface.
+Monitors encrypted protocols on the default interface.
+
+### Monitor All Protocols
+
+```bash
+sudo ./stinky.py --all
+```
+
+Includes unencrypted protocols (HTTP, DNS, etc.).
 
 ### Specify Interface
 
 ```bash
 sudo ./stinky.py eth0
+sudo ./stinky.py -i wlan0
 ```
 
-### Why Root?
+### All Options
 
-Packet capture requires root privileges (or CAP_NET_RAW capability).
+```bash
+sudo ./stinky.py -a -i eth0        # All protocols on eth0
+```
 
-## Output
+### Command-Line Arguments
+
+```
+-a, --all           Include unencrypted protocols
+-i, --interface     Specify network interface
+-h, --help          Show help message
+```
+
+## Example Output
 
 ### Screen Output
 
-Real-time display showing:
-- Connection endpoints (IP:port)
-- TLS version
-- Cipher suites
-- Server name (SNI)
-- Key exchange groups
-- Extensions
-
-Example:
 ```
 ================================================================================
 [2026-04-05T12:34:56.789] TLS ClientHello
+Post-Quantum: 🔐 HYBRID (PQ + Classical)
 ================================================================================
-Connection: 10.1.1.100:54321 -> 1.2.3.4:443
+Connection: 10.1.1.100:54321 -> 93.184.216.34:443
 Direction:  outbound
-TLS Version: TLS 1.2 (0x0303)
+Protocol:   TLS
+TLS Version: TLS 1.3 (0x0304)
 Server Name (SNI): example.com
 
 Client Offered Ciphers (15):
-  1. TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256 (0xc02f)
-  2. TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384 (0xc030)
-  3. TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256 (0xcca8)
+  1. TLS_AES_128_GCM_SHA256 (0x1301)
+  2. TLS_AES_256_GCM_SHA384 (0x1302)
+  3. TLS_CHACHA20_POLY1305_SHA256 (0x1303)
   ...
 
-Supported TLS Versions: TLS 1.3, TLS 1.2
 Supported Key Exchange Groups:
+  - x25519kyber768 ⭐ [POST-QUANTUM]
   - x25519
   - secp256r1
   - secp384r1
+================================================================================
 
-TLS Extensions: server_name, supported_versions, supported_groups, ...
+================================================================================
+[2026-04-05T12:35:01.123] WireGuard Handshake Initiation
+Post-Quantum: ⚠️  CLASSICAL CRYPTO (quantum-vulnerable)
+================================================================================
+Connection: 10.1.1.100:51820 -> 10.1.1.200:51820
+Direction:  outbound
+Protocol:   WireGuard
+Message Type: Handshake Initiation
+Crypto: Curve25519, ChaCha20-Poly1305
 ================================================================================
 ```
 
-### JSON Log File
-
-All captured data is saved to `stinky.json`:
+### JSON Log (stinky.json)
 
 ```json
 [
   {
+    "protocol": "TLS",
     "type": "TLS ClientHello",
     "timestamp": "2026-04-05T12:34:56.789",
     "src_ip": "10.1.1.100",
     "src_port": 54321,
-    "dst_ip": "1.2.3.4",
+    "dst_ip": "93.184.216.34",
     "dst_port": 443,
-    "connection": "10.1.1.100:54321 -> 1.2.3.4:443",
+    "connection": "10.1.1.100:54321 -> 93.184.216.34:443",
     "direction": "outbound",
-    "tls_version": "TLS 1.2",
-    "tls_version_value": "0x0303",
+    "encrypted": true,
+    "tls_version": "TLS 1.3",
     "server_name": "example.com",
-    "client_cipher_suites": [
-      {
-        "name": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
-        "value": "0xc02f"
-      }
-    ],
-    "cipher_count": 15,
-    "supported_versions": ["TLS 1.3", "TLS 1.2"],
-    "supported_groups": ["x25519", "secp256r1", "secp384r1"],
-    "extensions": ["server_name", "supported_versions", "supported_groups"]
+    "client_cipher_suites": [...],
+    "supported_groups": ["x25519kyber768", "x25519", "secp256r1"],
+    "post_quantum_secure": "Hybrid"
+  },
+  {
+    "protocol": "WireGuard",
+    "type": "WireGuard Handshake Initiation",
+    "timestamp": "2026-04-05T12:35:01.123",
+    "src_ip": "10.1.1.100",
+    "src_port": 51820,
+    "dst_ip": "10.1.1.200",
+    "dst_port": 51820,
+    "connection": "10.1.1.100:51820 -> 10.1.1.200:51820",
+    "direction": "outbound",
+    "encrypted": true,
+    "message_type": "Handshake Initiation",
+    "crypto_algorithms": "Curve25519, ChaCha20-Poly1305",
+    "post_quantum_secure": "No"
   }
 ]
 ```
 
-## What It Detects
+## Post-Quantum Cryptography
 
-### TLS Cipher Suites
-- Modern: AES-GCM, ChaCha20-Poly1305
-- Legacy: AES-CBC, 3DES, RC4
-- Key Exchange: ECDHE, DHE, RSA
-- Authentication: RSA, ECDSA
-- Hash: SHA256, SHA384
+### What Is Post-Quantum Crypto?
 
-### TLS Versions
-- TLS 1.3 (modern, secure)
-- TLS 1.2 (secure)
-- TLS 1.1 (deprecated)
-- TLS 1.0 (deprecated)
-- SSL 3.0 (insecure, should not be used)
+Quantum computers can break current public-key cryptography (RSA, ECDH, DH) using Shor's algorithm. Post-quantum cryptography uses algorithms resistant to quantum attacks.
 
-### Key Exchange Groups
-- Elliptic Curves: x25519, x448, secp256r1, secp384r1, secp521r1
-- Finite Field: ffdhe2048, ffdhe3072, ffdhe4096
+### PQ-Safe Algorithms Detected
 
-### SSH Information
-- Protocol version (1.x or 2.0)
-- Software implementation (OpenSSH, libssh, etc.)
-- Version numbers
+**Key Exchange:**
+- Kyber (CRYSTALS-Kyber) - NIST standard
+- NTRU
+- FrodoKEM
+- Hybrid schemes (e.g., x25519kyber768)
 
-## Security Analysis
+**Signatures:**
+- Dilithium (CRYSTALS-Dilithium)
+- Falcon
+- SPHINCS+
 
-Use this tool to:
+### Classical Algorithms (Quantum-Vulnerable)
 
-1. **Audit TLS Configuration**
-   - Check if servers accept weak ciphers
-   - Verify TLS 1.3 support
-   - Identify deprecated protocols (TLS 1.0/1.1)
+**Key Exchange:**
+- RSA
+- Diffie-Hellman (DH)
+- Elliptic Curve Diffie-Hellman (ECDH)
+- x25519, x448, secp256r1, etc.
 
-2. **Monitor Key Exchange**
-   - Ensure ECDHE or DHE is used (forward secrecy)
-   - Avoid plain RSA key exchange
+**Signatures:**
+- RSA signatures
+- ECDSA
+- DSA
 
-3. **Detect Weak Crypto**
-   - Find RC4, 3DES, or other weak ciphers
-   - Identify MD5 or SHA1 usage
+### Hybrid Approach
 
-4. **Verify SNI**
-   - Check server names in encrypted connections
-   - Useful for troubleshooting TLS issues
+Many systems use hybrid key exchange:
+- Classical algorithm (e.g., x25519) + PQ algorithm (e.g., Kyber768)
+- Protects against both current attacks and future quantum attacks
+- Transitional approach during PQ migration
 
-5. **SSH Version Tracking**
-   - Identify SSH software versions
-   - Detect outdated SSH servers
+## Security Analysis Use Cases
+
+### 1. Audit Quantum Readiness
+
+Find systems using only classical crypto:
+```bash
+jq '.[] | select(.post_quantum_secure == "No")' stinky.json
+```
+
+### 2. Identify Weak Crypto
+
+Find deprecated TLS versions:
+```bash
+jq '.[] | select(.tls_version == "TLS 1.0" or .tls_version == "TLS 1.1")' stinky.json
+```
+
+Find weak ciphers:
+```bash
+jq '.[] | select(.selected_cipher.name | contains("RC4") or contains("DES") or contains("MD5"))' stinky.json
+```
+
+### 3. Monitor Protocol Usage
+
+Count protocols:
+```bash
+jq 'group_by(.protocol) | map({protocol: .[0].protocol, count: length})' stinky.json
+```
+
+### 4. Track PQ Adoption
+
+Post-quantum security summary:
+```bash
+jq 'group_by(.post_quantum_secure) | map({status: .[0].post_quantum_secure, count: length})' stinky.json
+```
+
+### 5. Verify Forward Secrecy
+
+Check for RSA key exchange (no forward secrecy):
+```bash
+jq '.[] | select(.selected_cipher.name | contains("RSA_WITH"))' stinky.json
+```
+
+## Viewing Results
+
+### Pretty Print
+
+```bash
+cat stinky.json | jq .
+```
+
+### Count Captures
+
+```bash
+jq 'length' stinky.json
+```
+
+### Filter by Protocol
+
+```bash
+jq '.[] | select(.protocol == "TLS")' stinky.json
+jq '.[] | select(.protocol == "WireGuard")' stinky.json
+jq '.[] | select(.protocol == "SSH")' stinky.json
+```
+
+### Extract Server Names
+
+```bash
+jq '.[] | select(.server_name) | .server_name' stinky.json | sort -u
+```
+
+### Show Selected Ciphers
+
+```bash
+jq '.[] | select(.selected_cipher) | .selected_cipher.name' stinky.json | sort | uniq -c
+```
+
+### Find PQ-Secure Connections
+
+```bash
+jq '.[] | select(.post_quantum_secure == "Yes" or .post_quantum_secure == "Hybrid")' stinky.json
+```
+
+### Export to CSV
+
+```bash
+jq -r '.[] | [.timestamp, .protocol, .post_quantum_secure, .connection, .tls_version // .ssh_protocol_version, .selected_cipher.name // "-"] | @csv' stinky.json > report.csv
+```
+
+## Testing
+
+### Generate Test Traffic
+
+```bash
+# Terminal 1: Start sniffer
+sudo ./stinky.py
+
+# Terminal 2: Generate traffic
+curl https://example.com
+curl https://google.com
+ssh user@host
+ping 8.8.8.8  # ICMP (if --all mode)
+```
+
+### Test with WireGuard
+
+If you have WireGuard configured:
+```bash
+sudo wg-quick up wg0
+# stinky will capture the handshake
+```
+
+### Test with OpenVPN
+
+```bash
+sudo openvpn client.conf
+# stinky will capture TLS handshake
+```
+
+## Integration with UPCE
+
+Monitor UPCE's encrypted connections:
+
+```bash
+# Start sniffer
+cd ~/stinky
+sudo ./stinky.py
+
+# In another terminal, run UPCE
+cd ~/back-end
+./upce.py ../common/inventory.json ../common/policy.json ../config.json
+
+# Or provision
+./provision.sh
+
+# Or API
+./api.py --config ../common --port 8000
+```
+
+All TLS connections (Ansible, API) will be captured and analyzed.
 
 ## Limitations
 
-- **Encrypted Payload**: Cannot decrypt actual data (only analyzes handshakes)
-- **Perfect Forward Secrecy**: With ECDHE/DHE, session keys cannot be recovered
-- **TLS 1.3**: Some details hidden due to encrypted extensions
-- **Filter Scope**: Only captures ports 22 (SSH) and 443 (HTTPS)
-  - Modify `filter_str` in code to capture other ports
-
-## Tips
-
-### Capture All TLS Traffic (Any Port)
-
-Edit `stinky.py` and change:
-```python
-filter_str = "tcp port 443 or tcp port 22"
-```
-
-To:
-```python
-filter_str = "tcp"  # Captures all TCP, but slower
-```
-
-### Analyze Saved PCAP Files
-
-If you have existing packet captures:
-
-```python
-from scapy.all import *
-
-sniffer = CryptoSniffer(log_file="analysis.json")
-packets = rdpcap("capture.pcap")
-for pkt in packets:
-    sniffer.process_packet(pkt)
-```
-
-### Filter by IP
-
-Modify `filter_str`:
-```python
-filter_str = "(tcp port 443 or tcp port 22) and host 10.1.1.100"
-```
+- **Cannot decrypt traffic** - Only analyzes handshakes and metadata
+- **PQ detection limitations** - Relies on recognizing known PQ algorithm names
+- **Protocol coverage** - Covers major protocols, but not all possible encrypted protocols
+- **Performance** - Processing many packets may impact system performance
+- **False positives** - Some heuristics for protocol detection may occasionally misidentify packets
 
 ## Troubleshooting
 
-### "Permission denied"
-Run with `sudo`:
+### No packets captured
+
 ```bash
+# Check interface
+ip link show
+
+# Generate traffic
+curl https://example.com
+
+# Try specific interface
+sudo ./stinky.py -i eth0
+```
+
+### Permission denied
+
+```bash
+# Use sudo
 sudo ./stinky.py
 ```
 
-### "scapy not installed"
-Install scapy:
+### Scapy not installed
+
 ```bash
 pip3 install scapy
 ```
 
-### No packets captured
-- Check interface name: `ip link show`
-- Verify firewall rules aren't blocking
-- Generate traffic: `curl https://example.com`
-- Try specifying interface: `sudo ./stinky.py eth0`
+### Too many packets
 
-### Can't see local traffic
-Some systems don't capture localhost traffic. Use external connections.
+```bash
+# Filter by specific IP
+# Edit stinky.py, add to filter_str:
+"and host 10.1.1.100"
+```
 
 ## Legal Notice
 
-This tool is for authorized security testing and network analysis only. Use only on:
+**Authorized Use Only:**
 - Your own networks
-- Networks you have explicit permission to analyze
-- Authorized penetration testing engagements
+- Networks with explicit written permission
+- Authorized security assessments
+- Educational purposes in controlled environments
 
-Unauthorized network monitoring may violate laws and regulations.
+**Unauthorized network monitoring may violate:**
+- Computer Fraud and Abuse Act (USA)
+- Similar laws in other jurisdictions
+- Privacy regulations (GDPR, etc.)
+- Corporate policies
 
-## License
+Use responsibly and legally.
 
-This tool is provided as-is for educational and authorized security testing purposes.
+## Future Enhancements
+
+Potential additions:
+- Full IKE proposal parsing
+- Certificate extraction
+- PCAP file analysis mode
+- Real-time alerting (weak crypto detection)
+- Database backend for long-term storage
+- Web dashboard
+- Machine learning for anomaly detection
+
+## References
+
+### Post-Quantum Cryptography
+- NIST PQ Standardization: https://csrc.nist.gov/projects/post-quantum-cryptography
+- Kyber: https://pq-crystals.org/kyber/
+- Dilithium: https://pq-crystals.org/dilithium/
+
+### Protocols
+- TLS 1.3: RFC 8446
+- IKEv2: RFC 7296
+- WireGuard: https://www.wireguard.com/protocol/
+- QUIC: RFC 9000
+
+### Tools
+- Scapy: https://scapy.net/
+- UPCE: ~/docs/
+
+## Support
+
+For issues or questions:
+- Check QUICKSTART.md for common examples
+- Review documentation in ~/stinky/
+- Check UPCE documentation in ~/docs/
+
+Enjoy quantum-safe network analysis! 🔐
