@@ -467,3 +467,7 @@ For issues or questions:
 - Review documentation in ~/stinky/
 
 Enjoy quantum-safe network analysis! 🔐
+
+## License
+
+[GNU General Public License v3.0](LICENSE)
