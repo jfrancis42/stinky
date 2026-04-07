@@ -1,1 +1,51 @@
+# Generated capture data
 stinky.json
+
+# Generated reports (exclude all except examples)
+*_report.txt
+*_report.md
+*_report.html
+*_report.pdf
+report_*.txt
+report_*.md
+report_*.html
+report_*.pdf
+security_analysis.txt
+security_analysis.md
+security_analysis.html
+security_analysis.pdf
+analysis_*.txt
+analysis_*.md
+analysis_*.html
+analysis_*.pdf
+
+# Summary file
+SUMMARY.md
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Keep example files
+!example_output.json
+!*example*.json

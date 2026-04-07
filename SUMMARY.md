@@ -307,3 +307,213 @@ For issues or questions:
 **Get Started:** `sudo ./stinky.py`
 
 Enjoy comprehensive crypto analysis with post-quantum security assessment! 🔐
+
+## 📊 New: Security Analysis Tool
+
+### analyze.py - Automated Security Reporting
+
+Analyzes stinky.json captures and generates comprehensive security reports.
+
+#### Quick Start
+
+```bash
+cd ~/stinky
+./analyze.py                    # Text report to console
+./analyze.py -F markdown -o report.md
+./analyze.py -F html -o report.html
+./analyze.py -F json -o report.json
+```
+
+#### What It Analyzes
+
+- **Post-Quantum Security** - Identifies quantum-vulnerable connections
+- **Weak Crypto** - Finds deprecated TLS, broken ciphers, weak algorithms
+- **Forward Secrecy** - Detects connections without PFS
+- **Risk Scoring** - Calculates overall security risk (0-100 scale)
+- **Protocol Distribution** - Shows what protocols are used
+- **Connection Patterns** - Top talkers, server names, trends
+- **Recommendations** - Actionable remediation steps
+
+#### Report Sections
+
+1. **Executive Summary** - Risk level, score, capture stats
+2. **Post-Quantum Status** - PQ secure, hybrid, vulnerable counts
+3. **Critical Findings** - Sorted by severity with examples
+4. **TLS Version Distribution** - Version usage with deprecation flags
+5. **Top Cipher Suites** - Most used ciphers
+6. **Protocol Distribution** - Protocol breakdown
+7. **Top Server Names** - Most accessed servers (SNI)
+8. **Recommendations** - Prioritized action items
+
+#### Risk Scoring
+
+**0-100 scale based on:**
+- Post-Quantum Vulnerability (25 points)
+- Weak TLS Versions (25 points)
+- Weak Cipher Suites (30 points)
+- No Forward Secrecy (20 points)
+
+**Risk Levels:**
+- **CRITICAL** (75-100): Immediate action required
+- **HIGH** (50-74): Urgent remediation
+- **MEDIUM** (25-49): Address soon
+- **LOW** (1-24): Minor issues
+- **MINIMAL** (0): Good posture
+
+#### Example Workflow
+
+```bash
+# Capture traffic
+sudo ./stinky.py &
+SNIFFER_PID=$!
+
+# Generate traffic
+cd ~/back-end && ./provision.sh
+
+# Stop capture
+sudo kill $SNIFFER_PID
+
+# Analyze
+cd ~/stinky
+./analyze.py -F html -o security_report.html
+
+# View in browser
+firefox security_report.html
+```
+
+#### Advanced Features
+
+**Time Filtering:**
+```bash
+./analyze.py --since "2026-04-05T12:00:00"
+./analyze.py --before "2026-04-05T18:00:00"
+```
+
+**Multiple Formats:**
+```bash
+./analyze.py -o report.txt              # Text
+./analyze.py -F markdown -o report.md   # Markdown
+./analyze.py -F html -o report.html     # HTML
+./analyze.py -F json -o report.json     # JSON
+```
+
+**Automation:**
+```bash
+# Daily report
+./analyze.py -F html -o daily_$(date +%Y%m%d).html
+
+# Check risk level
+RISK=$(./analyze.py -F json | jq -r '.stats.risk_level')
+if [ "$RISK" = "CRITICAL" ]; then
+    echo "ALERT: Critical security risk!"
+fi
+```
+
+#### Documentation
+
+See **ANALYZER.md** for complete documentation including:
+- All command-line options
+- Output format details
+- Risk scoring methodology
+- Integration examples
+- Troubleshooting guide
+- Best practices
+
+---
+
+## 📁 Complete File List
+
+```
+~/stinky/
+├── stinky.py           - Main crypto sniffer (37KB)
+├── analyze.py          - Security analysis tool
+├── requirements.txt    - Dependencies (scapy)
+├── README.md          - Complete documentation
+├── QUICKSTART.md      - Quick examples
+├── PROTOCOLS.md       - Protocol details
+├── FEATURES.md        - Feature list
+├── ANALYZER.md        - Analysis tool docs
+├── SUMMARY.md         - This file
+└── example_output.json - Sample data
+```
+
+## 🎯 Complete Workflow
+
+### 1. Capture Crypto Traffic
+
+```bash
+cd ~/stinky
+sudo ./stinky.py
+```
+
+Captures encrypted protocols to `stinky.json` with post-quantum indicators.
+
+### 2. Analyze Security
+
+```bash
+./analyze.py
+```
+
+Generates comprehensive security report with risk scoring.
+
+### 3. Generate Reports
+
+```bash
+./analyze.py -F html -o security_report.html
+./analyze.py -F markdown -o security_report.md
+```
+
+Multiple output formats for different audiences.
+
+### 4. Take Action
+
+Based on recommendations:
+- Disable weak TLS versions
+- Remove broken ciphers
+- Enable forward secrecy
+- Plan post-quantum migration
+
+### 5. Re-test
+
+```bash
+sudo ./stinky.py
+./analyze.py
+```
+
+Verify improvements in risk score.
+
+---
+
+## 🚀 Two-Tool Security Stack
+
+**stinky.py** - Captures and identifies crypto
+**analyze.py** - Analyzes and reports security
+
+Together they provide:
+- ✅ Real-time crypto capture
+- ✅ Post-quantum detection
+- ✅ Comprehensive analysis
+- ✅ Risk assessment
+- ✅ Actionable recommendations
+- ✅ Multiple report formats
+- ✅ Automation ready
+
+Perfect for:
+- Security audits
+- Compliance verification
+- Quantum readiness assessment
+- Crypto policy enforcement
+- Continuous monitoring
+
+---
+
+**Get Started Now:**
+
+```bash
+cd ~/stinky
+pip3 install scapy
+sudo ./stinky.py &    # Capture
+./analyze.py          # Analyze
+```
+
+Happy security analysis! 🔐🔍
