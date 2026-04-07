@@ -373,28 +373,6 @@ sudo openvpn client.conf
 # stinky will capture TLS handshake
 ```
 
-## Integration with UPCE
-
-Monitor UPCE's encrypted connections:
-
-```bash
-# Start sniffer
-cd ~/stinky
-sudo ./stinky.py
-
-# In another terminal, run UPCE
-cd ~/back-end
-./upce.py ../common/inventory.json ../common/policy.json ../config.json
-
-# Or provision
-./provision.sh
-
-# Or API
-./api.py --config ../common --port 8000
-```
-
-All TLS connections (Ansible, API) will be captured and analyzed.
-
 ## Limitations
 
 - **Cannot decrypt traffic** - Only analyzes handshakes and metadata
@@ -481,13 +459,11 @@ Potential additions:
 
 ### Tools
 - Scapy: https://scapy.net/
-- UPCE: ~/docs/
 
 ## Support
 
 For issues or questions:
 - Check QUICKSTART.md for common examples
 - Review documentation in ~/stinky/
-- Check UPCE documentation in ~/docs/
 
 Enjoy quantum-safe network analysis! 🔐

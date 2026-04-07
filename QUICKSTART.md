@@ -250,17 +250,6 @@ cat report.txt
 
 ## Integration Examples
 
-### With UPCE
-
-Monitor UPCE traffic:
-```bash
-# Terminal 1
-cd ~/stinky && sudo ./stinky.py
-
-# Terminal 2
-cd ~/back-end && ./provision.sh
-```
-
 ### Continuous Monitoring
 
 Run in background:
@@ -331,6 +320,5 @@ sudo setcap cap_net_raw+ep $(which python3)
 
 - Full documentation: `README.md`
 - Example output: `example_output.json`
-- UPCE integration: `~/docs/`
 
 Happy crypto sniffing! 🔐

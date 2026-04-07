@@ -237,26 +237,6 @@ diff before_upgrade.txt after_upgrade.txt
 
 ## Integration Examples
 
-### With UPCE
-
-```bash
-# Monitor UPCE traffic and analyze
-cd ~/stinky
-sudo ./stinky.py &
-SNIFFER_PID=$!
-
-# Run UPCE operations
-cd ~/back-end
-./provision.sh
-
-# Stop sniffer
-sudo kill $SNIFFER_PID
-
-# Analyze captured data
-cd ~/stinky
-./analyze.py -F html -o upce_crypto_report.html
-```
-
 ### With CI/CD
 
 ```yaml

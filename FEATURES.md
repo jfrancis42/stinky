@@ -171,12 +171,6 @@ Post-Quantum Security:
 
 ### 11. Integration Ready
 
-**UPCE Integration:**
-```bash
-sudo ./stinky.py &
-cd ~/back-end && ./provision.sh
-```
-
 **JSON Processing:**
 ```bash
 jq '.[] | select(.post_quantum_secure == "No")' stinky.json

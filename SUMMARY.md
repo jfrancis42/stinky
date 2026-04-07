@@ -212,20 +212,6 @@ Analyze connection patterns and crypto usage during security incidents.
 ### 7. Research & Education
 Study real-world cryptography deployment and protocol usage.
 
-## Integration with UPCE
-
-Monitor UPCE's encrypted connections:
-
-```bash
-# Terminal 1: Start sniffer
-cd ~/stinky && sudo ./stinky.py
-
-# Terminal 2: Run UPCE operations
-cd ~/back-end && ./provision.sh
-```
-
-All TLS connections (Ansible, API calls) are captured and analyzed.
-
 ## System Requirements
 
 - Python 3.6+
@@ -256,7 +242,6 @@ For issues or questions:
 1. Check QUICKSTART.md for common tasks
 2. Review README.md for detailed info
 3. See PROTOCOLS.md for protocol details
-4. Check ~/docs/ for UPCE integration
 
 ## Legal Notice
 
