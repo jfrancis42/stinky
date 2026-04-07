@@ -1,0 +1,101 @@
+[
+  {
+    "type": "TLS ClientHello",
+    "timestamp": "2026-04-05T12:34:56.123456",
+    "src_ip": "10.1.1.100",
+    "src_port": 54321,
+    "dst_ip": "93.184.216.34",
+    "dst_port": 443,
+    "connection": "10.1.1.100:54321 -> 93.184.216.34:443",
+    "direction": "outbound",
+    "tls_version": "TLS 1.2",
+    "tls_version_value": "0x0303",
+    "server_name": "example.com",
+    "client_cipher_suites": [
+      {
+        "name": "TLS_AES_128_GCM_SHA256",
+        "value": "0x1301"
+      },
+      {
+        "name": "TLS_AES_256_GCM_SHA384",
+        "value": "0x1302"
+      },
+      {
+        "name": "TLS_CHACHA20_POLY1305_SHA256",
+        "value": "0x1303"
+      },
+      {
+        "name": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+        "value": "0xc02f"
+      },
+      {
+        "name": "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+        "value": "0xc030"
+      }
+    ],
+    "cipher_count": 15,
+    "supported_versions": [
+      "TLS 1.3",
+      "TLS 1.2"
+    ],
+    "supported_groups": [
+      "x25519",
+      "secp256r1",
+      "secp384r1",
+      "secp521r1"
+    ],
+    "extensions": [
+      "server_name",
+      "supported_versions",
+      "supported_groups",
+      "signature_algorithms",
+      "key_share"
+    ]
+  },
+  {
+    "type": "TLS ServerHello",
+    "timestamp": "2026-04-05T12:34:56.234567",
+    "src_ip": "93.184.216.34",
+    "src_port": 443,
+    "dst_ip": "10.1.1.100",
+    "dst_port": 54321,
+    "connection": "10.1.1.100:54321 -> 93.184.216.34:443",
+    "direction": "inbound",
+    "tls_version": "TLS 1.3",
+    "tls_version_value": "0x0304",
+    "selected_cipher": {
+      "name": "TLS_AES_128_GCM_SHA256",
+      "value": "0x1301"
+    },
+    "extensions": [
+      "supported_versions",
+      "key_share"
+    ]
+  },
+  {
+    "type": "SSH Protocol Exchange",
+    "timestamp": "2026-04-05T12:35:12.456789",
+    "src_ip": "10.1.1.100",
+    "src_port": 49152,
+    "dst_ip": "192.168.1.50",
+    "dst_port": 22,
+    "connection": "10.1.1.100:49152 -> 192.168.1.50:22",
+    "direction": "outbound",
+    "ssh_banner": "SSH-2.0-OpenSSH_8.9p1 Ubuntu-3ubuntu0.1",
+    "ssh_protocol_version": "2.0",
+    "ssh_software_version": "OpenSSH_8.9p1 Ubuntu-3ubuntu0.1"
+  },
+  {
+    "type": "SSH Protocol Exchange",
+    "timestamp": "2026-04-05T12:35:12.567890",
+    "src_ip": "192.168.1.50",
+    "src_port": 22,
+    "dst_ip": "10.1.1.100",
+    "dst_port": 49152,
+    "connection": "10.1.1.100:49152 -> 192.168.1.50:22",
+    "direction": "inbound",
+    "ssh_banner": "SSH-2.0-OpenSSH_8.2p1 Ubuntu-4ubuntu0.5",
+    "ssh_protocol_version": "2.0",
+    "ssh_software_version": "OpenSSH_8.2p1 Ubuntu-4ubuntu0.5"
+  }
+]
